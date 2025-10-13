@@ -1,6 +1,8 @@
 from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+
+from app.ai.query_service import handle_sql_queries
 from app.core.config import settings
 
 # prompt template
@@ -16,7 +18,25 @@ llm = ChatOpenAI(
 )
 
 # Function to generate a reply
-def generate_reply(message: str) -> str:
+# def generate_reply(message: str) -> str:
+#     chain = LLMChain(llm=llm, prompt=prompt)
+#     response = chain.run(message)
+#     return response
+
+# Function to generate a reply
+async def generate_reply(message: str, session_id: str = None) -> str:
+
+    # use normal LLM or SQL agent
+    keyword = ["data", "records", "show", "list", "how many", "count", "sum", "average"]
+
+    # check (DB related or not)
+    if any(kw in message.lower() for kw in keyword):
+        sql_response = await handle_sql_queries(message)
+        if "reply" in sql_response:
+            return sql_response["reply"]
+        else:
+            return f"Error: {sql_response['error']}"
+
+    # default (normal LLM)
     chain = LLMChain(llm=llm, prompt=prompt)
-    response = chain.run(message)
-    return response
+    return chain.run(message)
