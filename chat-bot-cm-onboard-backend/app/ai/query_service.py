@@ -2,7 +2,7 @@
 
 from app.ai.sql_agent import get_sql_agent
 
-async def handle_sql_queries(user_message: str):
+def handle_sql_queries(user_message: str):
 
     # process + automatically generate and execute SQL
     # return responses
