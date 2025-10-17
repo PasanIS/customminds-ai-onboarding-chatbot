@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session as DBSession
 from app.core.database import get_db
 from app.schemas.session import SessionCreate, SessionResponse
@@ -8,19 +8,21 @@ router = APIRouter(prefix="/api/session", tags=["Session"])
 
 @router.post("/create", response_model=SessionResponse)
 async def create_session(
-        request: Request,
-        db: DBSession = Depends(get_db)
+    request: Request,
+    db: DBSession = Depends(get_db)
 ):
-    session_service = SessionService(db)
+    try:
+        session_service = SessionService(db)
 
-    ip_address = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
+        ip_address = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
 
-    session_data = SessionCreate(
-        ip_address=ip_address,
-        user_agent=user_agent
-    )
+        session_data = SessionCreate(
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
 
-    new_session = session_service.create_session(session_data)
-
-    return new_session
+        new_session = session_service.create_session(session_data)
+        return SessionResponse.from_orm(new_session)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

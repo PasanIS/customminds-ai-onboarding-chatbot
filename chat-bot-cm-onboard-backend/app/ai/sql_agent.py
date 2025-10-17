@@ -3,7 +3,6 @@
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from app.core.database import engine
 from app.core.config import settings
 from app.ai.llm_manager import get_llm
 

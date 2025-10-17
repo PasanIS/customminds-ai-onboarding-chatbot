@@ -1,42 +1,54 @@
+from datetime import datetime
+from fastapi import HTTPException
+from sqlalchemy.orm import Session as DBSession
+from app.agent.agent_graph import create_graph
+from app.agent.agent_state import AgentState
+from app.models.chat_message import ChatMessage
+from app.models.session import Session as SessionModel
 from langchain.chains import LLMChain
-from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 
-from app.ai.query_service import handle_sql_queries
-from app.core.config import settings
+class ChatService:
+    def __init__(self, db: DBSession):
+        self.db = db
+        self.agent = create_graph()
 
-# prompt template
-prompt = PromptTemplate(
-    input_variables=["message"],
-    template="You are a helpful assistant. Answer the following question: {message}"
-)
+    def validate_session(self, session_id: str):
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required")
+        session = self.db.query(SessionModel).filter(SessionModel.session_id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=401, detail="Invalid session")
+        if session.expires_at and session.expires_at < datetime.utcnow():
+            raise HTTPException(status_code=401, detail="Session expired")
 
-# Initialize the chat model
-llm = ChatOpenAI(
-    openai_api_key=settings.OPENAI_API_KEY,
-    model_name="gpt-3.5-turbo"
-)
+        session.last_active = datetime.utcnow()
+        self.db.commit()
+        return session
 
-# Function to generate a reply
-# def generate_reply(message: str) -> str:
-#     chain = LLMChain(llm=llm, prompt=prompt)
-#     response = chain.run(message)
-#     return response
 
-# Function to generate a reply
-async def generate_reply(message: str, session_id: str = None) -> str:
+    async def process_message(self, session_id: str, message: str):
+        self.validate_session(session_id)
 
-    # use normal LLM or SQL agent
-    keyword = ["data", "records", "show", "list", "how many", "count", "sum", "average"]
+        user_msg = ChatMessage(session_id=session_id, sender="user", content=message)
+        self.db.add(user_msg)
+        self.db.commit()
+        self.db.refresh(user_msg)
 
-    # check (DB related or not)
-    if any(kw in message.lower() for kw in keyword):
-        sql_response = await handle_sql_queries(message)
-        if "reply" in sql_response:
-            return sql_response["reply"]
-        else:
-            return f"Error: {sql_response['error']}"
+        initial_agent_state: AgentState = {
+            "messages": [],
+            "user_query": message,
+            "reply": ""
+        }
 
-    # default (normal LLM)
-    chain = LLMChain(llm=llm, prompt=prompt)
-    return chain.run(message)
+
+        agent_state = await self.agent.ainvoke(initial_agent_state)
+        response = agent_state["reply"]
+
+        print("Lakmal (state reply):", response)
+
+        bot_msg = ChatMessage(session_id=session_id, sender="bot", content=response)
+        self.db.add(bot_msg)
+        self.db.commit()
+        self.db.refresh(bot_msg)
+
+        return {"reply": response, "saved": True}

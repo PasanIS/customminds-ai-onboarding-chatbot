@@ -8,6 +8,6 @@ def get_llm():
     # init and return Open AI llm client
     return ChatOpenAI(
         openai_api_key=settings.OPENAI_API_KEY,
-        model_name="gpt-3.5-turbo",
+        model_name="gpt-5-nano",
         temperature=0
     )

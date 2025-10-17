@@ -21,7 +21,7 @@ app = FastAPI(
 # Allow CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,8 +32,8 @@ app.add_middleware(
 # Base.metadata.create_all(bind=engine)
 
 
-app.include_router(chat_router, prefix="/api/chat", tags=["chat"])
-app.include_router(session_router, prefix="/api/session", tags=["session"])
+app.include_router(chat_router, prefix="", tags=["chat"])
+app.include_router(session_router, prefix="", tags=["session"])
 
 @app.get("/")
 def root():
