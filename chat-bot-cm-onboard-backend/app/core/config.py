@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     OPENAI_API_KEY: str
     SESSION_EXPIRE_HOURS: int
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
