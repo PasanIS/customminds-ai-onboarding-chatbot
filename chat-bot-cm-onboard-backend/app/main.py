@@ -10,6 +10,7 @@ load_dotenv()
 
 
 app = FastAPI(
+    debug=True,
     title="Chatbot API",
     docs_url = "/docs",
     redocs_url = "/redocs",

@@ -16,6 +16,8 @@ dependencies = [
     "langchain>=0.3.27",
     "alembic>=1.16.5",
     "langgraph>=0.6.10",
+    "ipython>=9.6.0",
+    "cryptography>=46.0.3",
 ]
 
 [tool.setuptools]

@@ -7,5 +7,5 @@ class AgentState(TypedDict):
 
     messages: list[BaseMessage]
     user_query: str
-
+    decision: str
     reply: str

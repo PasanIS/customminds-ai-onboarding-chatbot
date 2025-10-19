@@ -34,17 +34,18 @@ class ChatService:
         self.db.commit()
         self.db.refresh(user_msg)
 
+
+
         initial_agent_state: AgentState = {
             "messages": [],
             "user_query": message,
-            "reply": ""
+            "reply": "",
+            "decision": ""
         }
 
 
         agent_state = await self.agent.ainvoke(initial_agent_state)
         response = agent_state["reply"]
-
-        print("Lakmal (state reply):", response)
 
         bot_msg = ChatMessage(session_id=session_id, sender="bot", content=response)
         self.db.add(bot_msg)
