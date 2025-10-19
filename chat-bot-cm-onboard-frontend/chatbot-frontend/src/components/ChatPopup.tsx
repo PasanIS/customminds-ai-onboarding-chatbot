@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { RiChatSmile3Fill } from "react-icons/ri";
-
+import ReactMarkdown from "react-markdown";
 
 interface ChatMessage {
   sender: "user" | "bot";
@@ -26,20 +26,24 @@ const ChatPopup: React.FC = () => {
     setMessages([
       {
         sender: "bot",
-        content: "👋 Hi there! I’m your AI assistant. How can I help you today?",
+        content:
+          "👋 **Hi there!** I’m your AI assistant.\n\nHow can I help you today?",
       },
     ]);
   }, []);
 
   const getSessionId = async () => {
     try {
-      const response = await axios.post("http://localhost:8000/api/session/create");
+      const response = await axios.post(
+        "http://localhost:8000/api/session/create"
+      );
       setSessionId(response.data.session_id);
       localStorage.setItem("chatSessionId", response.data.session_id);
       console.log("Session created:", response.data);
-  } catch (error) {
-    console.error("Error creating session:", error);
-  }}
+    } catch (error) {
+      console.error("Error creating session:", error);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -49,15 +53,28 @@ const ChatPopup: React.FC = () => {
     setInput("");
     setIsTyping(true);
 
-     try {
-      const response = await axios.post("http://localhost:8000/api/chat/start/message/", {
-        message: input,
-        session_id: sessionId,
-      });
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/api/chat/start/message/",
+        {
+          message: input,
+          session_id: sessionId,
+        }
+      );
+
+      let botReply =
+        response.data.reply || "🤖 Sorry, I didn’t understand that.";
+
+      // Markdown auto-formatting for lists and paragraphs
+      botReply = botReply
+        .replace(/\n/g, "\n\n") // Add paragraph breaks
+        .replace(/(\d+)\)\s/g, "- ") // Convert numbered parentheses lists
+        .replace(/(\d+)\.\s/g, "- ") // Convert numbered lists
+        .replace(/•\s/g, "- "); // Standardize bullets
 
       const botMessage: ChatMessage = {
         sender: "bot",
-        content: response.data.reply || "🤖 Sorry, I didn’t understand that.",
+        content: botReply.trim(),
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -104,7 +121,7 @@ const ChatPopup: React.FC = () => {
 
       {/* Chat Interface */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[500px] bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden border border-gray-200">
+        <div className="fixed bottom-6 right-6 w-[500px] h-[700px] bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden border border-gray-200">
           {/* Header */}
           <div
             className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 
@@ -139,13 +156,13 @@ const ChatPopup: React.FC = () => {
                 }`}
               >
                 <div
-                  className={`px-4 py-2 rounded-2xl max-w-[70%] ${
+                  className={`px-4 py-2 rounded-2xl max-w-[70%] break-words ${
                     msg.sender === "user"
                       ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-800"
+                      : "bg-gray-50 text-gray-900"
                   }`}
                 >
-                  {msg.content}
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
               </div>
             ))}
