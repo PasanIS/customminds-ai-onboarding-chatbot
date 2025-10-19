@@ -3,7 +3,7 @@ from app.agent.agent_state import AgentState
 from app.agent.llm_manager import get_llm
 
 def chatbot_node(state: AgentState) -> AgentState:
-    llm = get_llm()
+    llm = get_llm(temperature=0.0)
 
     system_message = (
         "You are a routing assistant for a chatbot system.\n"

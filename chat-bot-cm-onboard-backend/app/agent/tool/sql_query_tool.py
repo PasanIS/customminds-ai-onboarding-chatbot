@@ -14,7 +14,7 @@ def sql_query_tool(user_query: str) -> str:
     """
 
     try:
-        llm = get_llm()
+        llm = get_llm(temperature=0)
         system_message = (
             "You are an expert SQL generator. "
             "Given a user's natural language request, output **only the SQL query** — nothing else. "
@@ -52,23 +52,23 @@ def sql_query_tool(user_query: str) -> str:
             rows = result.fetchall()
             keys = result.keys()
             data = [dict(zip(keys, row)) for row in rows]
-
+            print(f" data:\n{data}")
             system_message2 = (
-                "You are a precise and polite data assistant. "
-                "Given SQL query results as JSON, provide **only the exact answer** the user asked for — "
-                "no summaries, recommendations, or extra context unless the user explicitly asked for them.\n\n"
-                "Formatting rules:\n"
-                "- Use bullet points (•) for lists.\n"
-                "- Keep the tone clear, neutral, and professional.\n"
-                "- Never include filler text, emojis, or insights unless requested.\n"
-                "- If no data found, reply briefly like 'No matching records found.'"
+                "You are a warm, engaging, and professional assistant 🤝. "
+                "Given SQL query results (in JSON), answer the user's question clearly. "
+                "Be concise but friendly — use  emojis and bullet points for clarity. use things like points be informative\n\n"
+                "- If no data found, say 'No data found 😕'.\n"
+                "after answering engage with the user to prolong the conversation\n\n"
             )
+
 
             messages2 = [
                 SystemMessage(content=system_message2),
                 HumanMessage(content=f"User question: {user_query}\n\nSQL result: {data}")
             ]
-            response2 = llm.invoke(messages2)
+            llm2 = get_llm(temperature=0.85)
+            response2 = llm2.invoke(messages2)
+            print(f" response2:\n{response2}")
             return response2.content
         else:
             session.commit()
@@ -82,3 +82,4 @@ def sql_query_tool(user_query: str) -> str:
 
     finally:
         session.close()
+
