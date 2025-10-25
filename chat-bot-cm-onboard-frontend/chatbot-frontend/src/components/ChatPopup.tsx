@@ -76,7 +76,7 @@ const ChatPopup: React.FC = () => {
       );
       const newId = response.data.session_id;
       setSessionId(newId);
-      localStorage.setItem("chatSessionId", newId);
+      localStorage.setItem("chatSessionId", response.data.session_id);
 
       // Welcome on first chat
       setMessages([
@@ -130,10 +130,14 @@ const ChatPopup: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/chat/start/message/",
-        { message: input, session_id: sessionId },
-        { signal: controller.signal }
+        "http://localhost:8000/api/chat/start/message",
+        { message: input, session_id: sessionId }
       );
+
+      if (response.data.session_id) {
+        setSessionId(response.data.session_id);
+        localStorage.setItem("chatSessionId", response.data.session_id);
+      }
 
       let botReply =
         response.data.reply || "🤖 Sorry, I didn’t understand that.";
