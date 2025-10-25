@@ -16,23 +16,29 @@ async def send_message(request: ChatRequest, fastapi_request: Request, db: DBSes
 
     try:
         session_id = request.session_id
-        if not session_id:
 
+        if not session_id:
             ip_address = fastapi_request.client.host if fastapi_request.client else None
             user_agent = fastapi_request.headers.get("user-agent")
             session_data = SessionCreate(ip_address=ip_address, user_agent=user_agent)
+
             new_session = session_service.create_session(session_data)
             session_id = new_session.session_id
 
-        if not session_service.is_session_valid(session_id):
+        if request.session_id and not session_service.is_session_valid(session_id):
             raise HTTPException(status_code=401, detail="Invalid or expired session")
 
         result = await chat_service.process_message(session_id, request.message)
-
         bot_msg = result.get("message")
-        chat_message_out = ChatMessageOut.from_orm(bot_msg) if bot_msg is not None else None
+        chat_message_out = ChatMessageOut.from_orm(bot_msg) if bot_msg else None
 
-        return ChatResponse(reply=result["reply"], saved=result["saved"], message=chat_message_out, session_id=session_id)
+        return ChatResponse(
+            reply=result["reply"],
+            saved=result["saved"],
+            message=chat_message_out,
+            session_id=session_id
+        )
+
     except HTTPException:
         raise
     except Exception as e:
@@ -40,11 +46,11 @@ async def send_message(request: ChatRequest, fastapi_request: Request, db: DBSes
 
 @router.get("/history/{session_id}", response_model=list[ChatMessageOut])
 async def get_chat_history(session_id: str, db: DBSession = Depends(get_db)):
-    messages = (
-        db.query(ChatMessage)
-        .filter(ChatMessage.session_id == session_id)
-        .order_by(ChatMessage.created_at.desc())
-        .limit(10)
-        .all()
-    )
-    return list(reversed(messages))
+    chat_service = ChatService(db)
+
+    try:
+        result = await chat_service.get_chat_history(session_id,db)
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

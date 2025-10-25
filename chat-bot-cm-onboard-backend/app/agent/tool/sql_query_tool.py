@@ -1,5 +1,9 @@
+from typing import List
+
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
+
+from app.agent.agent_state import AgentState
 from app.agent.llm_manager import get_llm
 from sqlalchemy import text
 from app.core.database import SessionLocal
@@ -7,11 +11,17 @@ import traceback
 
 
 @tool
-def sql_query_tool(user_query: str) -> str:
+def sql_query_tool(user_query: list) -> str:
     """
-    Generate and Execute SQL query from user_query using SQLAlchemy.
+    Generate and Execute SQL query from user_query using SQLAlchemy
+
     """
 
+
+    messages = user_query
+    user_query = user_query[-1]['content']
+
+    print("hi_llm",messages)
     try:
         llm = get_llm(temperature=0)
         system_message = (
@@ -58,7 +68,7 @@ def sql_query_tool(user_query: str) -> str:
 
         messages = [
             SystemMessage(content=system_message),
-            HumanMessage(content=user_query)
+            HumanMessage(content=f"user query: {user_query } + conversation history: {messages}")
         ]
 
         response = llm.invoke(messages)
@@ -87,7 +97,7 @@ def sql_query_tool(user_query: str) -> str:
             system_message2 = (
                 "You are a friendly pharmacy assistant chatbot 🤖💊.\n"
                 "You receive structured query results and answer using natural human language.\n\n"
-
+                
                 "🎯 Response Style:\n"
                 "- Never mention SQL, queries, tables, or databases.\n"
                 "- Format answers using:\n"
@@ -114,7 +124,7 @@ def sql_query_tool(user_query: str) -> str:
 
             messages2 = [
                 SystemMessage(content=system_message2),
-                HumanMessage(content=f"User question: {user_query}\n\nSQL result: {data}")
+                HumanMessage(content=f"user query: {user_query } + conversation history: {messages}\n\nSQL result: {data}")
             ]
             llm2 = get_llm(temperature=0.85)
             response2 = llm2.invoke(messages2)

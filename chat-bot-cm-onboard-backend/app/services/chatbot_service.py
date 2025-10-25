@@ -25,6 +25,15 @@ class ChatService:
         self.db.commit()
         return session
 
+    async def get_chat_history(self, session_id: str, db: DBSession ):
+        messages = (
+            db.query(ChatMessage)
+            .filter(ChatMessage.session_id == session_id)
+            .order_by(ChatMessage.created_at.desc())
+            .limit(10)
+            .all()
+        )
+        return list(reversed(messages))
 
     async def process_message(self, session_id: str, message: str):
         self.validate_session(session_id)
@@ -34,17 +43,32 @@ class ChatService:
         self.db.commit()
         self.db.refresh(user_msg)
 
+        thread_config = {
+            "configurable": {
+                "thread_id": session_id,
+                "checkpoint_ns": "default"
+            }
+        }
 
+        messages = await self.get_chat_history(session_id, self.db)
+
+        formatted_messages = [
+            {
+                "role": "user" if m.sender == "user" else "assistant",
+                "content": m.content
+            }
+            for m in messages
+        ]
 
         initial_agent_state: AgentState = {
-            "messages": [],
+            "messages": formatted_messages,
             "user_query": message,
             "reply": "",
             "decision": ""
         }
 
 
-        agent_state = await self.agent.ainvoke(initial_agent_state)
+        agent_state = await self.agent.ainvoke(initial_agent_state, config=thread_config)
         response = agent_state["reply"]
 
         bot_msg = ChatMessage(session_id=session_id, sender="bot", content=response)
