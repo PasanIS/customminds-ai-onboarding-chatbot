@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session as DBSession
 from app.core.database import get_db
+from app.models import ChatMessage
 from app.schemas.chat_schema import ChatRequest, ChatResponse, ChatMessageOut
 from app.services.chatbot_service import ChatService
 from app.services.session_services import SessionService
@@ -36,3 +37,14 @@ async def send_message(request: ChatRequest, fastapi_request: Request, db: DBSes
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/history/{session_id}", response_model=list[ChatMessageOut])
+async def get_chat_history(session_id: str, db: DBSession = Depends(get_db)):
+    messages = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.session_id == session_id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    return list(reversed(messages))
