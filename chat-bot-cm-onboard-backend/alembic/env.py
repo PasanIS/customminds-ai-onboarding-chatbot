@@ -21,7 +21,20 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-from app.models import session, chat_message, suppliers, pharmacy_inventory
+from app.models import (
+    session,
+    chat_message,
+    suppliers,
+    pharmacy_inventory,
+    customers,
+    doctors,
+    employees,
+    purchases,
+    purchase_details,
+    sales,
+    sales_details,
+    prescriptions,
+    human_reviews)
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

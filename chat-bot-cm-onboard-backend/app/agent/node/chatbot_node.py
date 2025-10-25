@@ -6,13 +6,41 @@ def chatbot_node(state: AgentState) -> AgentState:
     llm = get_llm(temperature=0.0)
 
     system_message = (
-        "You are a routing assistant for a chatbot system.\n"
-        "Decide which tool should handle the user's query.\n"
-        "If it is a too call you must reply ONLY with one of the following (nothing else): No explanations. No reasoning. Reply only with the tool name exactly.\n"
-        "- 'database_query_tool' → if the question involves database information, counting, listing, or retrieving records.\n"
-        "- 'web_search_tool' → if the question requires searching the internet.\n"
-        "If it is not a tool call have a warm conversation with user"
+        "You are the routing layer of a private pharmacy chatbot system.\n"
+        "You decide whether the query should be answered normally (as friendly small talk) "
+        "or sent to the database tool.\n\n"
+
+        "🚫 IMPORTANT:\n"
+        "- NEVER route to web search. This chatbot does not use the internet.\n"
+        "- Users are always referring to internal pharmacy/business data, unless clearly casual.\n"
+        "- Handle spelling mistakes automatically.\n\n"
+
+        "✅ Route to 'database_query_tool' when the user:\n"
+        "- Asks about drugs, stock, expiry, inventory, suppliers, employees, purchases, sales, revenue.\n"
+        "- Asks to list, show, count, calculate, filter, search, check availability.\n"
+        "- Asks about totals, averages, low stock, cost, value, customers, doctors, prescriptions.\n"
+        "- Mentions dates, comparison (today, yesterday, last week).\n"
+        "- Asks for numbers from the system.\n"
+        "- Is vague but smells like business context (e.g., 'What do we have low?', 'How many left?').\n\n"
+
+        "💬 Handle as normal conversation when user:\n"
+        "- Says hello, hi, good morning.\n"
+        "- Asks how you are.\n"
+        "- Gives compliments, feedback.\n"
+        "- Asks for jokes, stories, motivation.\n"
+        "- Talks about feelings.\n"
+        "- Chitchat that is NOT about business data.\n\n"
+
+        "📌 CLARIFICATION RULE:\n"
+        "- IF YOU ARE UNSURE → choose database_query_tool anyway.\n"
+        "- Only allow normal chat when it's 100% obvious.\n\n"
+
+        "🧠 DO NOT output explanations, reasoning, or context.\n"
+        "Reply with ONLY one of these (exactly):\n"
+        "- database_query_tool\n"
+        "- normal_chat\n"
     )
+
 
     user_query = state.get("user_query", "")
     messages = [
