@@ -2,10 +2,11 @@
 
 This is my onboarding project as a trainee at CustomMinds AI. The goal is to build a chatbot that interacts with data stored in a MySQL database. It uses:
 
-- 🧠 **LangChain** for conversational logic
-- ⚡ **FastAPI** for backend APIs
-- 🐍 **Python** with `uv` for environment management
-- 💬 **React** for the frontend UI
+- 🧠 **LangChain** for conversational logic  
+- 🧩 **LangGraph** for agent workflows and stateful orchestration  
+- ⚡ **FastAPI** for backend APIs  
+- 🐍 **Python** with `uv` for environment management  
+- 💬 **React** for the frontend UI  
 - 🗄️ **MySQL** for storing and retrieving data
 
 ---
